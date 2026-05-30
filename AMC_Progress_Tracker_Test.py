@@ -1,10 +1,12 @@
 import datetime
+import json
 import matplotlib
 import AMC_Progress_Tracker as amc
 from AMC_Progress_Tracker import (
     next_competition_date,
     print_date_and_countdown,
     input_score_and_store,
+    load_records,
     read_scores,
     calculate_growth_rate,
     project_competition_score,
@@ -15,6 +17,11 @@ from AMC_Progress_Tracker import (
 )
 
 matplotlib.use("Agg")  # use a non-popup backend so plot tests don't open a window
+
+
+def write_scores(tmp_path, records):
+    """Helper: write a list of score dictionaries to the JSON file."""
+    (tmp_path / "amc_scores.json").write_text(json.dumps(records))
 
 
 def test_next_competition_date():
@@ -31,12 +38,27 @@ def test_print_date_and_countdown(capsys):
     assert "Days until AMC competition" in output
 
 
-def test_input_score_and_store(monkeypatch, tmp_path, capsys):
+def test_input_score_saves_dict_to_json(monkeypatch, tmp_path, capsys):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr("builtins.input", lambda _: "15/25")
     input_score_and_store()
     assert "60.00%" in capsys.readouterr().out
-    assert "60.00%" in (tmp_path / "amc_scores.txt").read_text()
+
+    # The file is valid JSON containing a list of dictionaries
+    records = json.loads((tmp_path / "amc_scores.json").read_text())
+    assert records == [{"date": str(datetime.date.today()), "score": 60.0}]
+
+
+def test_input_score_appends_without_losing_old_records(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    write_scores(tmp_path, [{"date": "2026-01-01", "score": 40.0}])
+    monkeypatch.setattr("builtins.input", lambda _: "20/40")
+    input_score_and_store()
+
+    records = json.loads((tmp_path / "amc_scores.json").read_text())
+    assert len(records) == 2
+    assert records[0] == {"date": "2026-01-01", "score": 40.0}
+    assert records[1]["score"] == 50.0  # 20/40 = 50%
 
 
 def test_input_score_rejects_bad_then_accepts_good(monkeypatch, tmp_path):
@@ -44,12 +66,22 @@ def test_input_score_rejects_bad_then_accepts_good(monkeypatch, tmp_path):
     answers = iter(["not a fraction", "20/40"])
     monkeypatch.setattr("builtins.input", lambda _: next(answers))
     input_score_and_store()
-    assert "50.00%" in (tmp_path / "amc_scores.txt").read_text()
+
+    records = json.loads((tmp_path / "amc_scores.json").read_text())
+    assert records[-1]["score"] == 50.0
+
+
+def test_load_records_returns_empty_when_no_file(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    assert load_records() == []
 
 
 def test_read_scores(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
-    (tmp_path / "amc_scores.txt").write_text("2026-01-01: 80.00%\n2026-02-01: 90.00%\n")
+    write_scores(tmp_path, [
+        {"date": "2026-01-01", "score": 80.0},
+        {"date": "2026-02-01", "score": 90.0},
+    ])
     dates, scores = read_scores()
     assert dates == [datetime.date(2026, 1, 1), datetime.date(2026, 2, 1)]
     assert scores == [80.0, 90.0]
@@ -97,7 +129,10 @@ def test_recommend_difficulty_levels():
 
 def test_analyze_progress_output(monkeypatch, tmp_path, capsys):
     monkeypatch.chdir(tmp_path)
-    (tmp_path / "amc_scores.txt").write_text("2026-01-01: 50.00%\n2026-02-01: 70.00%\n")
+    write_scores(tmp_path, [
+        {"date": "2026-01-01", "score": 50.0},
+        {"date": "2026-02-01", "score": 70.0},
+    ])
     analyze_progress()
     output = capsys.readouterr().out
     assert "Growth rate" in output
@@ -108,14 +143,16 @@ def test_analyze_progress_output(monkeypatch, tmp_path, capsys):
 
 
 def test_analyze_progress_handles_no_scores(monkeypatch, tmp_path, capsys):
-    monkeypatch.chdir(tmp_path)
-    (tmp_path / "amc_scores.txt").write_text("")
+    monkeypatch.chdir(tmp_path)  # no scores file at all
     analyze_progress()
     assert "No scores recorded yet" in capsys.readouterr().out
 
 
 def test_plot_scores_runs(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
-    (tmp_path / "amc_scores.txt").write_text("2026-01-01: 80.00%\n2026-02-01: 90.00%\n")
+    write_scores(tmp_path, [
+        {"date": "2026-01-01", "score": 80.0},
+        {"date": "2026-02-01", "score": 90.0},
+    ])
     monkeypatch.setattr(amc.plt, "show", lambda: None)
     plot_scores()  # passes if it runs without raising

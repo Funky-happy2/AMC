@@ -5,7 +5,7 @@ A small Python program that helps you prepare for the **AMC math competition** (
 ## What it does
 
 - 📅 **Counts down** the days until the next AMC competition.
-- ✍️ **Records your scores** — enter a score like `15/25` and it's saved as a percentage with the date.
+- ✍️ **Records your scores** — enter a score like `15/25` and it's saved (as a percentage with the date) to a local JSON file.
 - 📈 **Calculates your growth rate** — how many percentage points you're improving per week (line of best fit through your history).
 - 🔮 **Projects your competition-day score** based on your current trend.
 - 🎯 **Tracks a target score** — tells you the weekly pace you need to hit your goal, and whether you're **ON TRACK** or **BEHIND**.
@@ -52,8 +52,8 @@ TARGET_SCORE = 100.0  # the score you're aiming to reach by competition day
 |------|------------|
 | `AMC_Progress_Tracker.py` | The main program. Contains all the logic: the countdown, score entry, growth-rate calculation, projection, target tracking, difficulty recommendation, and the graph. |
 | `AMC_Progress_Tracker_Test.py` | The automated test suite (pytest). Tests every function so you can be confident the maths and file handling work correctly. |
-| `amc_scores.txt` | Auto-created when you log your first score. Stores your score history (one `date: percentage` per line). Not committed to git — it's your personal data. |
-| `.gitignore` | Tells git to ignore auto-generated Python folders (`__pycache__/`, `.pytest_cache/`) and your local `amc_scores.txt`. |
+| `amc_scores.json` | Auto-created when you log your first score. Stores your score history as a JSON list of records, e.g. `{"date": "2026-05-30", "score": 60.0}`. Not committed to git — it's your personal data. |
+| `.gitignore` | Tells git to ignore auto-generated Python folders (`__pycache__/`, `.pytest_cache/`) and your local score data. |
 | `README.md` | This file. |
 
 ## Running the tests

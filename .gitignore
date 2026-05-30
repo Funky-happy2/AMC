@@ -4,4 +4,5 @@ __pycache__/
 *.pyc
 
 # Local score data
+amc_scores.json
 amc_scores.txt

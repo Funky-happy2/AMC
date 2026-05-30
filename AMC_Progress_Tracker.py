@@ -1,8 +1,10 @@
 # A program that tracks the user's progress in preparing for the AMC math competition on the 4th to 6th of August
 import datetime
+import json
+import os
 import matplotlib.pyplot as plt
 
-SCORES_FILE = "amc_scores.txt"
+SCORES_FILE = "amc_scores.json"
 TARGET_SCORE = 100.0  # the score you're aiming to reach by competition day
 
 # Make a function to work out the date of the next AMC competition (4th August)
@@ -21,6 +23,13 @@ def print_date_and_countdown():
     print(f"Today's date: {today}")
     print(f"Days until AMC competition: {days_until_competition}")
 
+# Load the full list of saved score records (each record is a dictionary)
+def load_records():
+    if not os.path.exists(SCORES_FILE):
+        return []
+    with open(SCORES_FILE, "r") as file:
+        return json.load(file)
+
 # Make a function to allow the user to input their score as a fraction and turn it into a percentage and store in a file
 def input_score_and_store():
     while True:
@@ -29,9 +38,15 @@ def input_score_and_store():
             numerator, denominator = map(int, score_fraction.split('/'))
             percentage_score = (numerator / denominator) * 100
             print(f"Your score as a percentage: {percentage_score:.2f}%")
-            with open(SCORES_FILE, "a") as file:
-                file.write(f"{datetime.date.today()}: {percentage_score:.2f}%\n")
-                break
+            # Store each entry as a dictionary, then save the whole list as JSON
+            records = load_records()
+            records.append({
+                "date": str(datetime.date.today()),
+                "score": round(percentage_score, 2),
+            })
+            with open(SCORES_FILE, "w") as file:
+                json.dump(records, file, indent=2)
+            break
         except ValueError:
             print("Invalid input. Please enter the score in the format 'numerator/denominator")
             continue
@@ -40,11 +55,9 @@ def input_score_and_store():
 def read_scores():
     dates = []
     scores = []
-    with open(SCORES_FILE, "r") as file:
-        for line in file:
-            date_str, score_str = line.strip().split(": ")
-            dates.append(datetime.datetime.strptime(date_str, "%Y-%m-%d").date())
-            scores.append(float(score_str.replace("%", "")))
+    for record in load_records():
+        dates.append(datetime.datetime.strptime(record["date"], "%Y-%m-%d").date())
+        scores.append(float(record["score"]))
     return dates, scores
 
 # Work out how fast you are improving, in percentage points gained per day.
