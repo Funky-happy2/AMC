@@ -68,15 +68,15 @@ def feed_inputs(monkeypatch, *values):
 
 def test_input_saves_dict_with_correct_questions(monkeypatch, tmp_path, capsys):
     monkeypatch.chdir(tmp_path)
-    # answered all 25, got the first 15 right = 60%
-    feed_inputs(monkeypatch, "25", ",".join(str(q) for q in range(1, 16)))
+    # answered all 30, got the first 18 right = 60%
+    feed_inputs(monkeypatch, "30", ",".join(str(q) for q in range(1, 19)))
     input_score_and_store()
     assert "60.00%" in capsys.readouterr().out
 
     records = json.loads((tmp_path / "amc_scores.json").read_text())
     assert records[0]["score"] == 60.0
-    assert records[0]["answered"] == 25
-    assert records[0]["correct"] == list(range(1, 16))  # the per-question detail is stored
+    assert records[0]["answered"] == 30
+    assert records[0]["correct"] == list(range(1, 19))  # the per-question detail is stored
 
 
 def test_input_reminds_you_to_check_wrong_answers(monkeypatch, tmp_path, capsys):
@@ -107,7 +107,7 @@ def test_input_rejects_more_correct_than_answered(monkeypatch, tmp_path):
 def test_input_appends_without_losing_old_records(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     write_scores(tmp_path, [{"date": "2026-01-01", "score": 40.0, "correct": [1, 2]}])
-    feed_inputs(monkeypatch, "5", "1,2,3,4,5")  # 5/25 = 20%
+    feed_inputs(monkeypatch, "6", "1,2,3,4,5,6")  # 6/30 = 20%
     input_score_and_store()
 
     records = json.loads((tmp_path / "amc_scores.json").read_text())
@@ -119,7 +119,7 @@ def test_input_appends_without_losing_old_records(monkeypatch, tmp_path):
 def test_input_rejects_bad_then_accepts_good(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     # bad answered count, then a valid pair
-    feed_inputs(monkeypatch, "not a number", "5", "1,2,3,4,5")
+    feed_inputs(monkeypatch, "not a number", "6", "1,2,3,4,5,6")
     input_score_and_store()
 
     records = json.loads((tmp_path / "amc_scores.json").read_text())
@@ -261,14 +261,14 @@ def test_recommend_focus_section_picks_easiest_weak_one():
 
 
 def test_recommend_focus_section_none_when_all_solid():
-    records = [{"date": "2026-01-01", "correct": list(range(1, 26))}]  # everything right
+    records = [{"date": "2026-01-01", "correct": list(range(1, 31))}]  # everything right
     assert recommend_focus_section(records) is None
 
 
 def test_pacing_insight_counts_blanks_and_wrongs():
     records = [{"date": "2026-01-01", "answered": 20, "correct": [1, 2, 3, 4, 5]}]
     avg_blank, avg_wrong = pacing_insight(records)
-    assert avg_blank == 5   # 25 - 20 answered
+    assert avg_blank == 10  # 30 - 20 answered
     assert avg_wrong == 15  # 20 answered - 5 correct
 
 

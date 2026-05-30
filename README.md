@@ -4,7 +4,7 @@ A Python coach that helps you prepare for the **AMC math competition** (held 4th
 
 ## ⭐ The headline feature: Section Breakdown + Pacing Coach
 
-The AMC's 25 questions split into difficulty **sections** — Easy (Q1–10), Mid (Q11–20), Hard (Q21–25). Your fastest score gains don't come from the hard problems you can't do; they come from the **section you're closest to locking in.**
+The AMC's 30 questions split into difficulty **sections** — Easy (Q1–10), Mid (Q11–20), Hard (Q21–25), Very Hard (Q26–30). Your fastest score gains don't come from the hard problems you can't do; they come from the **section you're closest to locking in.**
 
 So the tracker:
 
@@ -16,10 +16,11 @@ So the tracker:
 ```
 ----- SECTION BREAKDOWN -----
 Easy  (Q1-10):   100%  (locked in)
-Mid   (Q11-20):    10%  (needs work)
-Hard  (Q21-25):     0%  (needs work)
+Mid   (Q11-20):    30%  (needs work)
+Hard  (Q21-25):    10%  (needs work)
+Very Hard (Q26-30):  0%  (needs work)
 Focus section:      Mid (Q11-20)  (your biggest available gain)
-Pacing check:       you leave ~12 questions BLANK per test - work on speed.
+Pacing check:       you leave ~10 questions BLANK per test - work on speed.
 ```
 
 ## What else it does

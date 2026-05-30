@@ -6,15 +6,16 @@ import matplotlib.pyplot as plt
 
 SCORES_FILE = "amc_scores.json"
 TARGET_SCORE = 100.0  # the score you're aiming to reach by competition day
-TOTAL_QUESTIONS = 25  # the AMC has 25 questions, getting harder from #1 to #25
+TOTAL_QUESTIONS = 30  # the AMC has 30 questions, getting harder from #1 to #30
 SOLID = 0.8  # accuracy at or above this means a section is "locked in"
 WALL = 0.5   # accuracy below this marks where your wall begins
 
-# The AMC groups its 25 questions into difficulty sections. Each (name, first, last).
+# The AMC groups its 30 questions into difficulty sections. Each (name, first, last).
 SECTIONS = [
     ("Easy", 1, 10),
     ("Mid", 11, 20),
     ("Hard", 21, 25),
+    ("Very Hard", 26, 30),
 ]
 
 # Make a function to work out the date of the next AMC competition (4th August)
@@ -144,11 +145,11 @@ def recommend_difficulty(latest_score):
     if latest_score < 40:
         return "Foundations", "Drill problems 1-10 until they feel automatic."
     elif latest_score < 60:
-        return "Intermediate", "Lock in problems 1-15 and start attempting 16-18."
+        return "Intermediate", "Lock in problems 1-20 and start attempting 21-23."
     elif latest_score < 80:
-        return "Advanced", "Push on problems 12-22; these decide qualification."
+        return "Advanced", "Push on problems 15-27; these decide qualification."
     else:
-        return "Olympiad", "Attack problems 20-25 and begin AIME-level practice."
+        return "Olympiad", "Attack problems 26-30 and begin AIME-level practice."
 
 # ---- "Find Your Wall" diagnostic: which individual questions are you actually missing? ----
 
