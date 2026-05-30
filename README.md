@@ -86,7 +86,7 @@ TARGET_SCORE = 100.0  # the score you're aiming to reach by competition day
 |------|------------|
 | `AMC_Progress_Tracker.py` | The main program. Contains all the logic: the countdown, score entry, growth-rate calculation, projection, target tracking, difficulty recommendation, and the graph. |
 | `AMC_Progress_Tracker_Test.py` | The automated test suite (pytest). Tests every function so you can be confident the maths and file handling work correctly. |
-| `amc_scores.json` | Auto-created when you log your first session. Stores your history as a JSON list of records, e.g. `{"date": "2026-05-30", "score": 60.0, "answered": 20, "correct": [1, 2, 3, 7]}`. Not committed to git — it's your personal data. |
+| `amc_scores.json` | Auto-created when you log your first session. Stores your history as a JSON list of records, e.g. `{"date": "2026-05-30", "score": 60.0, "answered": 25, "correct": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]}` (18 right out of 30 = 60%). Not committed to git — it's your personal data. |
 | `.gitignore` | Tells git to ignore auto-generated Python folders (`__pycache__/`, `.pytest_cache/`) and your local score data. |
 | `README.md` | This file. |
 

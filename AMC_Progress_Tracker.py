@@ -21,6 +21,7 @@ SECTIONS = [
 # Make a function to work out the date of the next AMC competition (4th August)
 def next_competition_date():
     today = datetime.date.today()
+    # The AMC runs 4-6 August; 2026 starts Tue 4 Aug. Update this date each year if it moves.
     competition_date = datetime.date(today.year, 8, 4)
     if competition_date < today:
         competition_date = datetime.date(today.year + 1, 8, 4)
@@ -74,7 +75,6 @@ def choose_coach_mode():
         if choice == "1":
             return "detailed"
         if choice == "2":
-            print("Tip: Detailed mode is the better coach - it tells you which sections to study.")
             return "quick"
         print("Please type 1 or 2.")
 
@@ -168,16 +168,16 @@ def required_weekly_growth(dates, scores, target=TARGET_SCORE):
     return gap / weeks_left
 
 # Recommend which AMC problems to focus on based on your most recent score.
-# The AMC has 25 questions that get harder from #1 to #25.
+# The AMC has 30 questions that get harder from #1 to #30.
 def recommend_difficulty(latest_score):
     if latest_score < 40:
-        return "Foundations", "Drill problems 1-10 until they feel automatic."
+        return "Foundations", "Lock in the Easy section (Q1-10) until it is automatic."
     elif latest_score < 60:
-        return "Intermediate", "Lock in problems 1-20 and start attempting 21-23."
+        return "Intermediate", "Secure Easy (Q1-10) and push into Mid (Q11-20)."
     elif latest_score < 80:
-        return "Advanced", "Push on problems 15-27; these decide qualification."
+        return "Advanced", "Own Mid (Q11-20) and start attacking Hard (Q21-25)."
     else:
-        return "Olympiad", "Attack problems 26-30 and begin AIME-level practice."
+        return "Olympiad", "Go after Very Hard (Q26-30) and add AIME-level practice."
 
 # ---- "Find Your Wall" diagnostic: which individual questions are you actually missing? ----
 
@@ -369,8 +369,10 @@ def main():
     while True:
         input_score_and_store()
         analyze_progress()
-        plot_scores()
-        plot_section_accuracy()
+        # Each graph opens in a blocking window, so only show them on request.
+        if input("Show your graphs? (y/n): ").strip().lower() in ("y", "yes"):
+            plot_scores()
+            plot_section_accuracy()
         continue_input = input("Do you want to enter another score? (y/n): ").strip().lower()
         if continue_input in ('y', 'yes'):
             print("\nGreat! Let's log another session.")
