@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 
 SCORES_FILE = "amc_scores.json"
 TARGET_SCORE = 100.0  # the score you're aiming to reach by competition day
+TOTAL_QUESTIONS = 25  # the AMC has 25 questions, getting harder from #1 to #25
+SOLID = 0.8  # accuracy at or above this means a question is "locked in"
+WALL = 0.5   # accuracy below this marks where your wall begins
 
 # Make a function to work out the date of the next AMC competition (4th August)
 def next_competition_date():
@@ -30,25 +33,40 @@ def load_records():
     with open(SCORES_FILE, "r") as file:
         return json.load(file)
 
-# Make a function to allow the user to input their score as a fraction and turn it into a percentage and store in a file
+# Turn a string like "1, 2, 5, 8" into a clean, validated list of question numbers.
+# Raises ValueError if anything isn't a whole number in range, so the caller can re-prompt.
+def parse_question_numbers(raw, total=TOTAL_QUESTIONS):
+    correct = set()
+    for piece in raw.split(","):
+        piece = piece.strip()
+        if piece == "":
+            continue  # allow blank entries / a fully blank line (= got none right)
+        number = int(piece)  # raises ValueError on non-numbers
+        if not 1 <= number <= total:
+            raise ValueError(f"Question {number} is out of range 1-{total}")
+        correct.add(number)
+    return sorted(correct)
+
+# Make a function to allow the user to input which questions they got right and store the result
 def input_score_and_store():
     while True:
-        score_fraction = input("Enter your score as a fraction (e.g. 15/25): ")
+        raw = input(f"Enter the question numbers you got RIGHT (e.g. 1,2,3,7), 1-{TOTAL_QUESTIONS}: ")
         try:
-            numerator, denominator = map(int, score_fraction.split('/'))
-            percentage_score = (numerator / denominator) * 100
-            print(f"Your score as a percentage: {percentage_score:.2f}%")
-            # Store each entry as a dictionary, then save the whole list as JSON
+            correct = parse_question_numbers(raw)
+            percentage_score = (len(correct) / TOTAL_QUESTIONS) * 100
+            print(f"You got {len(correct)}/{TOTAL_QUESTIONS} right = {percentage_score:.2f}%")
+            # Store each entry as a dictionary (with the per-question detail), save as JSON
             records = load_records()
             records.append({
                 "date": str(datetime.date.today()),
                 "score": round(percentage_score, 2),
+                "correct": correct,
             })
             with open(SCORES_FILE, "w") as file:
                 json.dump(records, file, indent=2)
             break
-        except ValueError:
-            print("Invalid input. Please enter the score in the format 'numerator/denominator")
+        except ValueError as error:
+            print(f"Invalid input ({error}). Enter question numbers separated by commas, e.g. 1,2,3,7")
             continue
 
 # Read all stored scores back as parallel lists of dates and percentages
@@ -111,8 +129,42 @@ def recommend_difficulty(latest_score):
     else:
         return "Olympiad", "Attack problems 20-25 and begin AIME-level practice."
 
+# ---- "Find Your Wall" diagnostic: which individual questions are you actually missing? ----
+
+# For every question number, what fraction of your sessions did you get it right?
+def accuracy_by_question(records, total=TOTAL_QUESTIONS):
+    sessions = [r for r in records if "correct" in r]  # only sessions with per-question detail
+    if not sessions:
+        return {}
+    accuracy = {}
+    for question in range(1, total + 1):
+        hits = sum(1 for r in sessions if question in r["correct"])
+        accuracy[question] = hits / len(sessions)
+    return accuracy
+
+# Your "wall": the first question number where your accuracy drops below the WALL threshold.
+# Everything before it is reliable; this is where your score starts leaking.
+def find_the_wall(records, total=TOTAL_QUESTIONS):
+    accuracy = accuracy_by_question(records, total)
+    if not accuracy:
+        return None
+    for question in range(1, total + 1):
+        if accuracy[question] < WALL:
+            return question
+    return total + 1  # no wall found - you're solid across the whole paper
+
+# The questions worth drilling next: the lowest-numbered ones you haven't locked in yet.
+# Early AMC questions are the easiest points to recover, so they give the biggest gain.
+def recommend_focus_questions(records, n=3, total=TOTAL_QUESTIONS):
+    accuracy = accuracy_by_question(records, total)
+    if not accuracy:
+        return []
+    shaky = [q for q in range(1, total + 1) if accuracy[q] < SOLID]
+    return shaky[:n]
+
 # Pull everything together: growth rate, projection, readiness and a difficulty rating
 def analyze_progress():
+    records = load_records()
     dates, scores = read_scores()
     if not scores:
         print("No scores recorded yet - enter a score to unlock your analysis.")
@@ -143,6 +195,27 @@ def analyze_progress():
         print(f"Target status:       {'ON TRACK' if on_track else 'BEHIND - increase your pace'}")
     print(f"Recommended level:   {level}")
     print(f"Coach's advice:      {advice}")
+
+    # ---- The headline feature: your personal wall and exactly what to drill ----
+    accuracy = accuracy_by_question(records)
+    if accuracy:
+        wall = find_the_wall(records)
+        solid = [q for q in accuracy if accuracy[q] >= SOLID]
+        focus = recommend_focus_questions(records)
+        print("\n----- FIND YOUR WALL -----")
+        if wall is not None and wall <= TOTAL_QUESTIONS:
+            print(f"Your wall:           question #{wall} (accuracy drops off here)")
+        else:
+            print("Your wall:           none - you're solid across the whole paper!")
+        print(f"Locked-in questions: {len(solid)}/{TOTAL_QUESTIONS}")
+        if focus:
+            focus_str = ", ".join(f"#{q}" for q in focus)
+            print(f"Drill these next:    {focus_str}  (your highest-value fixes)")
+            # Ceiling = what you'd score if you locked in your focus questions too
+            ceiling = (len(solid) + len(focus)) / TOTAL_QUESTIONS * 100
+            print(f"Ceiling if you do:   {ceiling:.0f}%  (up from {latest:.0f}%)")
+        else:
+            print("Drill these next:    nothing - every question is locked in. Aim higher!")
     print("=================================\n")
 
 # Make a function to read the scores from the file and print them out as a graph using matplotlib
@@ -172,6 +245,30 @@ def plot_scores():
     plt.tight_layout()
     plt.show()
 
+# Draw a bar chart of how often you get each question right, with your wall marked.
+# Green = locked in, yellow = shaky, red = at/under your wall. This is the "look twice" view.
+def plot_question_accuracy():
+    records = load_records()
+    accuracy = accuracy_by_question(records)
+    if not accuracy:
+        return  # no per-question data yet, nothing to draw
+    questions = list(accuracy.keys())
+    percents = [accuracy[q] * 100 for q in questions]
+    colors = ['green' if p >= SOLID * 100 else 'orange' if p >= WALL * 100 else 'red'
+              for p in percents]
+    plt.bar(questions, percents, color=colors)
+    wall = find_the_wall(records)
+    if wall is not None and wall <= TOTAL_QUESTIONS:
+        plt.axvline(wall, color='black', linestyle='--', label=f'Your wall (#{wall})')
+        plt.legend()
+    plt.title("AMC Accuracy by Question Number")
+    plt.xlabel("Question number (easier <--> harder)")
+    plt.ylabel("How often you get it right (%)")
+    plt.ylim(0, 100)
+    plt.xticks(questions, rotation=90)
+    plt.tight_layout()
+    plt.show()
+
 # Main function to run the program
 def main():
     print_date_and_countdown()
@@ -179,6 +276,7 @@ def main():
         input_score_and_store()
         analyze_progress()
         plot_scores()
+        plot_question_accuracy()
         continue_input = input("Do you want to enter another score? (y/n): ")
         if continue_input.lower() != 'y':
             break
