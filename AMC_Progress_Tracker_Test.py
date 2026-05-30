@@ -16,9 +16,12 @@ from AMC_Progress_Tracker import (
     accuracy_by_question,
     find_the_wall,
     recommend_focus_questions,
+    accuracy_by_section,
+    recommend_focus_section,
+    pacing_insight,
     analyze_progress,
     plot_scores,
-    plot_question_accuracy,
+    plot_section_accuracy,
 )
 
 matplotlib.use("Agg")  # use a non-popup backend so plot tests don't open a window
@@ -236,24 +239,64 @@ def test_recommend_focus_questions_picks_lowest_shaky():
     assert focus == [3, 4, 5]  # the three lowest-numbered questions not locked in
 
 
-def test_analyze_progress_shows_wall_section(monkeypatch, tmp_path, capsys):
+def test_accuracy_by_section():
+    records = [
+        # got all of Easy (1-10), half of Mid (11-15), none of Hard
+        {"date": "2026-01-01", "correct": list(range(1, 11)) + [11, 12, 13, 14, 15]},
+    ]
+    section = accuracy_by_section(records)
+    assert section["Easy"] == 1.0   # 10/10
+    assert section["Mid"] == 0.5    # 5/10
+    assert section["Hard"] == 0.0   # 0/5
+
+
+def test_accuracy_by_section_empty_without_data():
+    assert accuracy_by_section([{"date": "2026-01-01", "score": 50.0}]) == {}
+
+
+def test_recommend_focus_section_picks_easiest_weak_one():
+    # Easy locked in, Mid weak -> Mid is the recommended focus
+    records = [{"date": "2026-01-01", "correct": list(range(1, 11)) + [11]}]
+    assert recommend_focus_section(records).startswith("Mid")
+
+
+def test_recommend_focus_section_none_when_all_solid():
+    records = [{"date": "2026-01-01", "correct": list(range(1, 26))}]  # everything right
+    assert recommend_focus_section(records) is None
+
+
+def test_pacing_insight_counts_blanks_and_wrongs():
+    records = [{"date": "2026-01-01", "answered": 20, "correct": [1, 2, 3, 4, 5]}]
+    avg_blank, avg_wrong = pacing_insight(records)
+    assert avg_blank == 5   # 25 - 20 answered
+    assert avg_wrong == 15  # 20 answered - 5 correct
+
+
+def test_pacing_insight_none_without_data():
+    assert pacing_insight([{"date": "2026-01-01", "score": 50.0}]) is None
+
+
+def test_analyze_progress_shows_section_breakdown(monkeypatch, tmp_path, capsys):
     monkeypatch.chdir(tmp_path)
     write_scores(tmp_path, [
-        {"date": "2026-01-01", "score": 40.0, "correct": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
-        {"date": "2026-02-01", "score": 48.0, "correct": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]},
+        {"date": "2026-01-01", "score": 40.0, "answered": 12,
+         "correct": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
+        {"date": "2026-02-01", "score": 48.0, "answered": 14,
+         "correct": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]},
     ])
     analyze_progress()
     output = capsys.readouterr().out
-    assert "FIND YOUR WALL" in output
-    assert "Drill these next" in output
-    assert "Ceiling if you do" in output
+    assert "SECTION BREAKDOWN" in output
+    assert "Easy" in output and "Mid" in output and "Hard" in output
+    assert "Focus section" in output
+    assert "Pacing check" in output
 
 
-def test_plot_question_accuracy_runs(monkeypatch, tmp_path):
+def test_plot_section_accuracy_runs(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
-    write_scores(tmp_path, [{"date": "2026-01-01", "score": 40.0, "correct": [1, 2, 3]}])
+    write_scores(tmp_path, [{"date": "2026-01-01", "score": 40.0, "correct": [1, 2, 3, 11, 21]}])
     monkeypatch.setattr(amc.plt, "show", lambda: None)
-    plot_question_accuracy()  # passes if it runs without raising
+    plot_section_accuracy()  # passes if it runs without raising
 
 
 def test_plot_scores_runs(monkeypatch, tmp_path):

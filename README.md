@@ -2,23 +2,24 @@
 
 A Python coach that helps you prepare for the **AMC math competition** (held 4th–6th of August). Instead of just logging a score, you log **which questions you got right** — and the program finds your **wall**, the exact point where your paper starts leaking points, then tells you precisely what to drill next for the biggest gain.
 
-## ⭐ The headline feature: "Find Your Wall"
+## ⭐ The headline feature: Section Breakdown + Pacing Coach
 
-The AMC's 25 questions get harder from #1 to #25. Everyone has a *wall* — the question number where they start falling apart. Your fastest score gains don't come from the hard problems you can't do; they come from the **easy-to-mid problems you're inconsistently missing.**
+The AMC's 25 questions split into difficulty **sections** — Easy (Q1–10), Mid (Q11–20), Hard (Q21–25). Your fastest score gains don't come from the hard problems you can't do; they come from the **section you're closest to locking in.**
 
 So the tracker:
 
-- 🧱 **Finds your wall** — the first question where your accuracy drops below 50%.
-- 🎯 **Names the exact questions to drill next** — your highest-value fixes (the lowest-numbered questions you haven't locked in).
-- 📈 **Shows your realistic ceiling** — the score you'd reach by shoring those up.
-- 🟢🟡🔴 **Charts accuracy per question** — green = locked in, yellow = shaky, red = past your wall.
+- 📊 **Scores you by section** — Easy / Mid / Hard accuracy at a glance.
+- 🎯 **Names the section to focus on next** — the easiest one you haven't locked in (the cheapest points to recover).
+- ⏱️ **Diagnoses pacing vs accuracy** — it separates questions you left **blank** (a speed problem) from ones you **got wrong** (a knowledge problem), so you know whether to train for time or for technique.
+- 🟢🟡🔴 **Charts accuracy per section** — green = locked in, yellow = shaky, red = needs work.
 
 ```
------ FIND YOUR WALL -----
-Your wall:           question #11 (accuracy drops off here)
-Locked-in questions: 10/25
-Drill these next:    #11, #12, #13  (your highest-value fixes)
-Ceiling if you do:   52%  (up from 48%)
+----- SECTION BREAKDOWN -----
+Easy  (Q1-10):   100%  (locked in)
+Mid   (Q11-20):    10%  (needs work)
+Hard  (Q21-25):     0%  (needs work)
+Focus section:      Mid (Q11-20)  (your biggest available gain)
+Pacing check:       you leave ~12 questions BLANK per test - work on speed.
 ```
 
 ## What else it does
@@ -29,7 +30,7 @@ Ceiling if you do:   52%  (up from 48%)
 - 🔮 **Projects your competition-day score** based on your current trend.
 - 🎯 **Tracks a target score** — tells you the weekly pace you need, and whether you're **ON TRACK** or **BEHIND**.
 - 🧠 **Recommends a difficulty level** (Foundations → Intermediate → Advanced → Olympiad) with coaching advice.
-- 📊 **Plots two graphs** — your score trend (with projection + competition date) and your per-question accuracy.
+- 📊 **Plots two graphs** — your score trend (with projection + competition date) and your accuracy by section.
 
 ## Requirements
 
@@ -53,7 +54,7 @@ pip install matplotlib
 2. It shows today's date and the days left until the competition.
 3. Enter **how many questions you answered** (attempted) this session.
 4. Enter the question numbers you got right, e.g. `1,2,3,7,11`. It works out how many you got wrong and **reminds you to go back and check them.**
-5. Read your analysis (growth rate, projection, target status, recommended level, **and your wall**) and view the two graphs.
+5. Read your analysis (growth rate, projection, target status, recommended level, **your section breakdown and pacing check**) and view the two graphs.
 6. Choose `y` to log another session, or `n` to quit.
 
 Your scores are saved between runs, so the more you log, the more accurate your trend and projection become.
