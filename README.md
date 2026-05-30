@@ -24,7 +24,7 @@ Ceiling if you do:   52%  (up from 48%)
 ## What else it does
 
 - 📅 **Counts down** the days until the next AMC competition.
-- ✍️ **Records each session** — enter the question numbers you got right (e.g. `1,2,3,7`); saved as JSON with the date.
+- ✍️ **Records each session** — enter how many you answered and which you got right; it flags how many you got wrong and **reminds you to review them.** Saved as JSON with the date.
 - 📈 **Calculates your growth rate** — percentage points improved per week (line of best fit through your history).
 - 🔮 **Projects your competition-day score** based on your current trend.
 - 🎯 **Tracks a target score** — tells you the weekly pace you need, and whether you're **ON TRACK** or **BEHIND**.
@@ -51,9 +51,10 @@ pip install matplotlib
    ```
 
 2. It shows today's date and the days left until the competition.
-3. Enter the question numbers you got right this session, e.g. `1,2,3,7,11`.
-4. Read your analysis (growth rate, projection, target status, recommended level, **and your wall**) and view the two graphs.
-5. Choose `y` to log another session, or `n` to quit.
+3. Enter **how many questions you answered** (attempted) this session.
+4. Enter the question numbers you got right, e.g. `1,2,3,7,11`. It works out how many you got wrong and **reminds you to go back and check them.**
+5. Read your analysis (growth rate, projection, target status, recommended level, **and your wall**) and view the two graphs.
+6. Choose `y` to log another session, or `n` to quit.
 
 Your scores are saved between runs, so the more you log, the more accurate your trend and projection become.
 
@@ -71,7 +72,7 @@ TARGET_SCORE = 100.0  # the score you're aiming to reach by competition day
 |------|------------|
 | `AMC_Progress_Tracker.py` | The main program. Contains all the logic: the countdown, score entry, growth-rate calculation, projection, target tracking, difficulty recommendation, and the graph. |
 | `AMC_Progress_Tracker_Test.py` | The automated test suite (pytest). Tests every function so you can be confident the maths and file handling work correctly. |
-| `amc_scores.json` | Auto-created when you log your first session. Stores your history as a JSON list of records, e.g. `{"date": "2026-05-30", "score": 60.0, "correct": [1, 2, 3, 7]}`. Not committed to git — it's your personal data. |
+| `amc_scores.json` | Auto-created when you log your first session. Stores your history as a JSON list of records, e.g. `{"date": "2026-05-30", "score": 60.0, "answered": 20, "correct": [1, 2, 3, 7]}`. Not committed to git — it's your personal data. |
 | `.gitignore` | Tells git to ignore auto-generated Python folders (`__pycache__/`, `.pytest_cache/`) and your local score data. |
 | `README.md` | This file. |
 

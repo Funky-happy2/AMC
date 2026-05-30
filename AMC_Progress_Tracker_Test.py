@@ -57,22 +57,54 @@ def test_parse_question_numbers_rejects_bad_input():
         parse_question_numbers("99")  # out of range 1-25
 
 
+def feed_inputs(monkeypatch, *values):
+    """Helper: feed a sequence of answers to successive input() prompts."""
+    answers = iter(values)
+    monkeypatch.setattr("builtins.input", lambda _: next(answers))
+
+
 def test_input_saves_dict_with_correct_questions(monkeypatch, tmp_path, capsys):
     monkeypatch.chdir(tmp_path)
-    # 15 questions right out of 25 = 60%
-    monkeypatch.setattr("builtins.input", lambda _: ",".join(str(q) for q in range(1, 16)))
+    # answered all 25, got the first 15 right = 60%
+    feed_inputs(monkeypatch, "25", ",".join(str(q) for q in range(1, 16)))
     input_score_and_store()
     assert "60.00%" in capsys.readouterr().out
 
     records = json.loads((tmp_path / "amc_scores.json").read_text())
     assert records[0]["score"] == 60.0
+    assert records[0]["answered"] == 25
     assert records[0]["correct"] == list(range(1, 16))  # the per-question detail is stored
+
+
+def test_input_reminds_you_to_check_wrong_answers(monkeypatch, tmp_path, capsys):
+    monkeypatch.chdir(tmp_path)
+    feed_inputs(monkeypatch, "5", "1,2,3")  # answered 5, only 3 right -> 2 wrong
+    input_score_and_store()
+    output = capsys.readouterr().out
+    assert "2 question(s) incorrectly" in output
+    assert "check those" in output
+
+
+def test_input_congratulates_when_all_answered_correct(monkeypatch, tmp_path, capsys):
+    monkeypatch.chdir(tmp_path)
+    feed_inputs(monkeypatch, "3", "1,2,3")  # answered 3, all 3 right -> none wrong
+    input_score_and_store()
+    assert "Every question you answered was correct" in capsys.readouterr().out
+
+
+def test_input_rejects_more_correct_than_answered(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    # first try claims 2 answered but 5 correct (impossible), then a valid entry
+    feed_inputs(monkeypatch, "2", "1,2,3,4,5", "5", "1,2,3,4,5")
+    input_score_and_store()
+    records = json.loads((tmp_path / "amc_scores.json").read_text())
+    assert records[-1]["answered"] == 5
 
 
 def test_input_appends_without_losing_old_records(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     write_scores(tmp_path, [{"date": "2026-01-01", "score": 40.0, "correct": [1, 2]}])
-    monkeypatch.setattr("builtins.input", lambda _: "1,2,3,4,5")  # 5/25 = 20%
+    feed_inputs(monkeypatch, "5", "1,2,3,4,5")  # 5/25 = 20%
     input_score_and_store()
 
     records = json.loads((tmp_path / "amc_scores.json").read_text())
@@ -83,8 +115,8 @@ def test_input_appends_without_losing_old_records(monkeypatch, tmp_path):
 
 def test_input_rejects_bad_then_accepts_good(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
-    answers = iter(["not numbers", "1,2,3,4,5"])
-    monkeypatch.setattr("builtins.input", lambda _: next(answers))
+    # bad answered count, then a valid pair
+    feed_inputs(monkeypatch, "not a number", "5", "1,2,3,4,5")
     input_score_and_store()
 
     records = json.loads((tmp_path / "amc_scores.json").read_text())

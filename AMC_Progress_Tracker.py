@@ -47,26 +47,40 @@ def parse_question_numbers(raw, total=TOTAL_QUESTIONS):
         correct.add(number)
     return sorted(correct)
 
-# Make a function to allow the user to input which questions they got right and store the result
+# Make a function to allow the user to input how many they answered and which they got right, then store it
 def input_score_and_store():
     while True:
-        raw = input(f"Enter the question numbers you got RIGHT (e.g. 1,2,3,7), 1-{TOTAL_QUESTIONS}: ")
         try:
+            answered = int(input(f"How many questions did you answer (attempt)? 0-{TOTAL_QUESTIONS}: "))
+            if not 0 <= answered <= TOTAL_QUESTIONS:
+                raise ValueError(f"You can only answer between 0 and {TOTAL_QUESTIONS} questions")
+            raw = input(f"Enter the question numbers you got RIGHT (e.g. 1,2,3,7), 1-{TOTAL_QUESTIONS}: ")
             correct = parse_question_numbers(raw)
+            if len(correct) > answered:
+                raise ValueError(f"You marked {len(correct)} correct but only answered {answered}")
+
             percentage_score = (len(correct) / TOTAL_QUESTIONS) * 100
+            wrong = answered - len(correct)
             print(f"You got {len(correct)}/{TOTAL_QUESTIONS} right = {percentage_score:.2f}%")
+            # Remind the user to review the questions they got wrong
+            if wrong > 0:
+                print(f"⚠️  You answered {wrong} question(s) incorrectly - go back and check those before next time!")
+            else:
+                print("✅ Every question you answered was correct - nice work!")
+
             # Store each entry as a dictionary (with the per-question detail), save as JSON
             records = load_records()
             records.append({
                 "date": str(datetime.date.today()),
                 "score": round(percentage_score, 2),
+                "answered": answered,
                 "correct": correct,
             })
             with open(SCORES_FILE, "w") as file:
                 json.dump(records, file, indent=2)
             break
         except ValueError as error:
-            print(f"Invalid input ({error}). Enter question numbers separated by commas, e.g. 1,2,3,7")
+            print(f"Invalid input ({error}). Please try again.")
             continue
 
 # Read all stored scores back as parallel lists of dates and percentages
