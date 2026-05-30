@@ -371,16 +371,15 @@ def main():
         analyze_progress()
         plot_scores()
         plot_section_accuracy()
-        continue_input = input("Do you want to enter another score? (y/n): ")
-        if continue_input.lower() == 'y':
+        continue_input = input("Do you want to enter another score? (y/n): ").strip().lower()
+        if continue_input in ('y', 'yes'):
             print("\nGreat! Let's log another session.")
             continue
-        elif continue_input.lower() == 'n':
+        elif continue_input in ('n', 'no'):
             print("Thanks for using the AMC Progress Tracker! Keep up the good work and good luck on competition day!")
             break
         else:
-            print("Invalid input. Exiting.")
-            break
+            print("Please type y or n.")
 
 if __name__ == "__main__":
     main()
