@@ -1,0 +1,7 @@
+# Python auto-generated folders/files (safe to ignore)
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# Local score data
+amc_scores.txt
